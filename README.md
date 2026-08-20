@@ -1,42 +1,86 @@
 # Flipkart Axis Cashback
 
-Tracks the ₹4,000 quarterly cashback cap on the Flipkart Axis Bank credit card, so you know how
-much you can still earn before it resets — and how much to spend to actually get it.
+**[flipcash.rghvgrv.live](https://flipcash.rghvgrv.live)**
 
-The catch the card's terms bury: the quarter is anchored to **your statement date**, not the
-calendar. With a bill on the 15th, the quarters are 16 Mar–15 Jun, 16 Jun–15 Sep, 16 Sep–15 Dec,
-16 Dec–15 Mar. Cashback earned on a statement is paid on the *next* one.
+Tells you how much of your ₹4,000 quarterly cashback cap is left on the Flipkart Axis Bank credit
+card, and how much you'd have to spend to actually use it before it resets.
 
-## What it does
+## The problem it solves
 
-- Ask for your bill date, work out which quarter you're in and how many days are left.
-- Ask only for the bills that already exist in that quarter — enter the "Cashback Earned" figure
-  printed at the bottom of each.
-- Show what you'll actually be paid, what the cap wasted, and how much you can still spend on
-  Flipkart / Myntra / Cleartrip / partner brands to use the rest.
+The card's terms bury two details that make the cap hard to track by hand:
 
-Everything is stored in your browser's `localStorage`. No accounts, no server, no data leaves the
+1. **The quarter follows your statement date, not the calendar.** If your bill comes on the 15th,
+   your quarters are 16 Mar–15 Jun, 16 Jun–15 Sep, 16 Sep–15 Dec, 16 Dec–15 Mar. Someone billed on
+   the 2nd has a completely different grid.
+2. **Cashback earned on one bill is paid on the next one.** So the "Cashback Credited" figure on
+   your statement is last month's earning arriving — not this month's. Adding up the wrong column
+   gives you the wrong number.
+
+Miss the cap and the excess is simply forfeited. There's no rollover.
+
+## How to use it
+
+1. Enter the day of the month your bill is generated.
+2. It works out which quarter you're in, how many days are left, and which bills already exist in
+   that quarter — then asks for the **"Cashback Earned"** figure from each of those.
+3. You get back what you'll actually be paid, what the cap wasted, and how much more you can spend
+   on Flipkart / Myntra / Cleartrip / partner brands to use up the rest.
+
+Your figures are saved in the browser's `localStorage`. No account, no server, nothing leaves your
 device.
 
-## Run it
+## The rates
+
+| Where you spend | Back | Counts toward the ₹4,000 cap |
+| --- | --- | --- |
+| Flipkart | 5% | yes |
+| Myntra | 4% | yes |
+| Cleartrip | 4% | yes |
+| Partner brands (PVR, Uber, cult.fit) | 4% | no |
+| Everything else | 1% | no |
+
+No cashback at all on fuel, rent, wallet top-ups, EMIs, gold or government payments — leave those
+out of the numbers you enter.
+
+## Running it locally
 
 ```sh
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # production build into dist/
+npm run lint
 ```
 
-## The rules, in code
+Node 22 or newer (Vite 8 requires `^20.19 || >=22.12`); `.nvmrc` pins it.
 
-All of it lives in [`src/cashback.js`](src/cashback.js) — rates, the ₹4,000 cap, quarter
-boundaries, and the credit-next-cycle chain. Change a rate there if the terms change.
+## The code
+
+| File | What's in it |
+| --- | --- |
+| `src/cashback.js` | Every rule: rates, the ₹4,000 cap, quarter boundaries, the earn-now-credited-next chain. Change a rate here if the terms change. |
+| `src/cashback.test.mjs` | Assertions covering the quarter math and the cap. `node src/cashback.test.mjs` — no test framework needed. |
+| `src/App.jsx` | The three-step UI. |
+| `src/Icons.jsx` | Inline SVGs, so there's no icon dependency. |
+
+Run the checks before opening a PR:
 
 ```sh
-node src/cashback.test.mjs   # asserts the quarter math and the cap
+node src/cashback.test.mjs && npm run build
 ```
 
-## Not covered
+## Deployment
 
-Excluded spends (fuel, rent, wallet loads, EMI, gold, government payments) earn nothing — leave
-them out. Credits are processed against the merchant's MID/VPA, so a delayed one can take up to 90
-days and land in a later cycle than shown.
+Hosted on Cloudflare Workers as a static asset site. `wrangler.jsonc` serves `./dist` with SPA
+not-found handling, so deep links and refreshes return the app rather than a 404.
+
+Pushes to `main` build and deploy automatically; branches get their own preview URL.
+
+## Contributing
+
+`main` is protected — no direct pushes, every change goes through a pull request.
+
+```sh
+git checkout -b my-change
+git push -u origin my-change
+gh pr create --fill
+```
