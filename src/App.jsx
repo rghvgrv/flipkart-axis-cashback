@@ -10,6 +10,7 @@ import {
   fmtRange,
   monthName,
   addMonths,
+  clampDay,
 } from './cashback';
 import * as I from './Icons';
 import './App.css';
@@ -31,7 +32,9 @@ export default function App() {
   // 'system' until the user flips the switch, then an explicit 'light' / 'dark'.
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'system');
   const [systemDark, setSystemDark] = useState(prefersDark);
-  const [day, setDay] = useState(() => load('statementDay', DEFAULT_STATEMENT_DAY));
+  // Raw text so the field can be emptied and retyped; `day` is always a valid 1-31.
+  const [dayText, setDayText] = useState(() => String(load('statementDay', DEFAULT_STATEMENT_DAY)));
+  const day = clampDay(dayText);
   const [earned, setEarned] = useState(() => load('earnedByMonth', {})); // { 'YYYY-MM': '202' }
 
   useEffect(() => {
@@ -100,12 +103,13 @@ export default function App() {
           <label className="narrow">
             <span>Bill date every month</span>
             <input
-              type="number"
-              min="1"
-              max="31"
+              type="text"
               inputMode="numeric"
-              value={day}
-              onChange={(e) => setDay(Math.min(31, Math.max(1, Number(e.target.value) || 1)))}
+              maxLength={2}
+              value={dayText}
+              onChange={(e) => setDayText(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              onBlur={() => setDayText(String(day))}
+              onFocus={(e) => e.target.select()}
             />
           </label>
           <div className="detected">
