@@ -1,7 +1,8 @@
 // Run: node src/cashback.test.mjs
 import assert from 'node:assert/strict';
 import {
-  calculate, statementQuarter, statementPeriod, quarterStatus, fmtRange, fmtDate, QUARTER_CAP,
+  calculate, statementQuarter, statementPeriod, quarterStatus, clampDay, fmtRange, fmtDate,
+  QUARTER_CAP, DEFAULT_STATEMENT_DAY,
 } from './cashback.js';
 
 // Statement date 15th => Q1 is 16 Mar – 15 Jun.
@@ -87,5 +88,16 @@ assert.equal(fresh.daysLeftInQuarter, 86);
 const d28 = quarterStatus(new Date(2026, 8, 20), 28);
 assert.equal(d28.open, '2026-09');
 assert.deepEqual(d28.issued, ['2026-07', '2026-08']);
+
+// The bill-date field hands over raw text, so every value has to survive the trip.
+assert.equal(clampDay('20'), 20);
+assert.equal(clampDay('21'), 21);
+assert.equal(clampDay('1'), 1);
+assert.equal(clampDay('31'), 31);
+assert.equal(clampDay('0'), 1);    // snaps up
+assert.equal(clampDay('45'), 31);  // snaps down
+assert.equal(clampDay(''), DEFAULT_STATEMENT_DAY);
+assert.equal(clampDay('abc'), DEFAULT_STATEMENT_DAY);
+assert.equal(clampDay(undefined), DEFAULT_STATEMENT_DAY);
 
 console.log('all cashback checks passed');

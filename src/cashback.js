@@ -17,6 +17,13 @@ export const RATES = [
   { key: 'other', label: 'anything else', rate: 0.01 },
 ];
 
+/** Any user input -> a usable statement day. Empty/garbage falls back, out of range snaps. */
+export const clampDay = (text) => {
+  const n = parseInt(text, 10);
+  if (!Number.isFinite(n)) return DEFAULT_STATEMENT_DAY;
+  return Math.min(31, Math.max(1, n));
+};
+
 const round2 = (n) => Math.round(n * 100) / 100;
 const daysIn = (y, m) => new Date(y, m, 0).getDate(); // m is 1-indexed
 const ymParts = (ym) => ym.split('-').map(Number);
